@@ -159,11 +159,11 @@ def test_code(test_case):
             req.poses[x].orientation.z, req.poses[x].orientation.w])
 
     ### Your IK code here
-    # Compensate for rotation discrepancy between DH parameters and Gazebo
     p_end_effector = N(Matrix([[px], [py], [pz], [1]]))
 
     # Calculate joint angles using Geometric IK method
-    versor_x_gazebo = N(rot_z(yaw) * rot_y(pitch) * rot_x(roll))[:, 0]
+    R_rpy_gazebo = N(rot_z(yaw) * rot_y(pitch) * rot_x(roll))
+    versor_x_gazebo = Rrpy_gazebo[:, 0]
     p_wc = N(p_end_effector - versor_x_gazebo * d7)  # wrist-center position
     theta1 = atan2(p_wc[1], p_wc[0])
     # Position of joint-2 (x, y, z and placeholder for 4th coord)
@@ -181,6 +181,17 @@ def test_code(test_case):
     angle_offset_wc_j3 = atan2(-a3, d4)
     theta3 = pi/2 - (inner_j3 + angle_offset_wc_j3)
 
+    dh_theta1 = theta1
+    dh_theta2 = - (pi/2 - theta2)
+    dh_theta3 = theta3
+    R0_3 = N(R0_1.subs({q1: dh_theta1}))\
+           * N(R1_2.subs({q2: dh_theta2}))\
+           * N(R2_3.subs({q3: dh_theta3}))
+
+    Rrpy_dh = R_rpy_gazebo * R_dh_to_gazebo
+    R3_6 = R0_3.inv("LU") * Rrpy_dh[0:3, 0:3]
+    print(R3_6)
+    print(simplify(3_4 * R4_5 * R5_6))
     theta4, theta5, theta6 = 0, 0, 0
 
     ## 
