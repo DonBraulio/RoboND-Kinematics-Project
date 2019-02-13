@@ -44,7 +44,9 @@ def rot_y(angle):
                      [   -sin(angle),  0, cos(angle), 0],
                      [             0,  0,          0, 1]]))
 
-## Definitions outside the loop ##
+# Calculates the norm only for the 3 first coordinates (useful for 4d vecs)
+def norm3d(vec):
+    return Matrix(vec[0:3]).norm()
 
 # Variable DH params (related to joint angles)
 q1, q2, q3, q4, q5, q6, q7 = symbols('q1:8')  # theeta values of dh-params
@@ -98,8 +100,9 @@ T6_7 = Matrix([[cos(q7),         -sin(q7),               0,      a6    ],
                [sin(q7)*sin(p6), cos(q7)*sin(p6),  cos(p6), cos(p6)*d7 ],
                [              0,               0,        0,     1      ]])
 
-# Correction matrix from Gazebo coords to DH coords
-R_gazebo_to_dh = N(simplify(rot_y(pi/2) * rot_x(pi)))
+# Correction matrices from/to Gazebo coords to DH coords
+R_gazebo_to_dh = N(simplify(rot_x(pi) * rot_y(pi/2)))
+R_dh_to_gazebo = N(simplify(rot_z(pi) * rot_y(-pi/2)))
 
 # Extract rotation matrices from the transformation matrices
 R0_1 = T0_1[0:3, 0:3]
@@ -148,23 +151,25 @@ def test_code(test_case):
     ## 
 
     ## Insert IK code here!
+    px = req.poses[0].position.x
+    py = req.poses[0].position.y
+    pz = req.poses[0].position.z
     (roll, pitch, yaw) = tf.transformations.euler_from_quaternion(
         [req.poses[x].orientation.x, req.poses[x].orientation.y,
             req.poses[x].orientation.z, req.poses[x].orientation.w])
 
     ### Your IK code here
     # Compensate for rotation discrepancy between DH parameters and Gazebo
-    p_end_effector = N(R_gazebo_to_dh * Matrix([[px], [py], [pz], [1]]))
+    p_end_effector = N(Matrix([[px], [py], [pz], [1]]))
 
     # Calculate joint angles using Geometric IK method
-    rpy_end_effector = N(rot_z(yaw) * rot_y(pitch) * rot_x(roll) * R_gazebo_to_dh)
-    versor_z = rpy_end_effector[0:4, 2]  # wrist-center z direction versor
-    p_wc = N(p_end_effector - versor_z * d7)  # wrist-center position
+    versor_x_gazebo = N(rot_z(yaw) * rot_y(pitch) * rot_x(roll))[:, 0]
+    p_wc = N(p_end_effector - versor_x_gazebo * d7)  # wrist-center position
     theta1 = atan2(p_wc[1], p_wc[0])
     # Position of joint-2 (x, y, z and placeholder for 4th coord)
     p_j2 = Matrix([a1 * cos(theta1), a1 * sin(theta1), d1, 0])
     vec_j2_to_wc = p_wc - p_j2  # vector from joint-2 to wrist-center
-    d2_wc = vec_j2_to_wc.norm()  # distance from joint 2 to wrist-center
+    d2_wc = norm3d(vec_j2_to_wc)  # distance from joint 2 to wrist-center
 
     # Calculate inner angles from triangle between joint 2, joint 3 and wrist-center
     inner_j2 = acos((d2_3**2 + d2_wc**2 - d3_wc**2)/(2*d2_3*d2_wc))
