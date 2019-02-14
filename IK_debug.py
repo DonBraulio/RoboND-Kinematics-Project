@@ -162,7 +162,7 @@ def test_code(test_case):
     p_end_effector = N(Matrix([[px], [py], [pz], [1]]))
 
     # Calculate joint angles using Geometric IK method
-    R_rpy_gazebo = N(rot_z(yaw) * rot_y(pitch) * rot_x(roll))
+    Rrpy_gazebo = N(rot_z(yaw) * rot_y(pitch) * rot_x(roll))
     versor_x_gazebo = Rrpy_gazebo[:, 0]
     p_wc = N(p_end_effector - versor_x_gazebo * d7)  # wrist-center position
     theta1 = atan2(p_wc[1], p_wc[0])
@@ -188,11 +188,14 @@ def test_code(test_case):
            * N(R1_2.subs({q2: dh_theta2}))\
            * N(R2_3.subs({q3: dh_theta3}))
 
-    Rrpy_dh = R_rpy_gazebo * R_dh_to_gazebo
+    Rrpy_dh = Rrpy_gazebo * R_dh_to_gazebo
     R3_6 = R0_3.inv("LU") * Rrpy_dh[0:3, 0:3]
-    print(R3_6)
-    print(simplify(3_4 * R4_5 * R5_6))
-    theta4, theta5, theta6 = 0, 0, 0
+    dh_theta6 = atan2(R3_6[2, 0], R3_6[2, 2])
+    dh_theta4 = atan2(R3_6[1, 0], R3_6[0, 0])
+    dh_theta5 = atan2(-R3_6[2, 0], sqrt(R3_6[0, 0]**2 + R3_6[1, 0]**2))
+    theta6 = dh_theta6
+    theta5 = dh_theta5
+    theta4 = dh_theta4
 
     ## 
     ########################################################################################
@@ -232,6 +235,9 @@ def test_code(test_case):
     t_4_e = abs(theta4-test_case[2][3])
     t_5_e = abs(theta5-test_case[2][4])
     t_6_e = abs(theta6-test_case[2][5])
+    print("Theta4: {} | test: {}".format(theta4, test_case[2][3]))
+    print("Theta5: {} | test: {}".format(theta5, test_case[2][4]))
+    print("Theta6: {} | test: {}".format(theta6, test_case[2][5]))
     print ("\nTheta 1 error is: %04.8f" % t_1_e)
     print ("Theta 2 error is: %04.8f" % t_2_e)
     print ("Theta 3 error is: %04.8f" % t_3_e)
