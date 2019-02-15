@@ -194,6 +194,9 @@ def test_code(test_case):
     theta5 = N(atan2(sqrt(R3_6[0, 2]**2 + R3_6[2, 2]**2), R3_6[1, 2]))
     theta4 = atan2(R3_6[2,2], -R3_6[0,2])
     theta6 = atan2(-R3_6[1,1],R3_6[1,0])
+    dh_theta4 = theta4
+    dh_theta5 = theta5
+    dh_theta6 = theta6
 
     ## 
     ########################################################################################
@@ -208,16 +211,15 @@ def test_code(test_case):
     ########################################################################################
 
     ## For error analysis please set the following variables of your WC location and EE location in the format of [x,y,z]
-    fk_ee = N(T0_1.subs({q1: theta1}))\ 
-            * N(T1_2.subs({q2: theta2}))\
-            * N(T2_3.subs({q3: theta3}))\
-            * N(T3_4.subs({q4: theta4}))\
-            * N(T4_5.subs({q5: theta5}))\
-            * N(T5_6.subs({q6: theta6}))\
-            * N(T6_7.subs({q7: 0}))\
-            * [0, 0, 0, 1]
+    your_ee = N(T0_1.subs({q1: dh_theta1}))\
+              * N(T1_2.subs({q2: dh_theta2}))\
+              * N(T2_3.subs({q3: dh_theta3}))\
+              * N(T3_4.subs({q4: dh_theta4}))\
+              * N(T4_5.subs({q5: dh_theta5}))\
+              * N(T5_6.subs({q6: dh_theta6}))\
+              * N(T6_7.subs({q7: 0}))\
+              * Matrix([0, 0, 0, 1])
     your_wc = [p_wc[0],p_wc[1],p_wc[2]] # <--- Load your calculated WC values in this array
-    your_ee = [fk_ee[0, 3],fk_ee[1, 3],fk_ee[2, 3]] # <--- Load your calculated end effector value from your forward kinematics
     ########################################################################################
 
     ## Error analysis
@@ -241,9 +243,6 @@ def test_code(test_case):
     t_4_e = abs(theta4-test_case[2][3])
     t_5_e = abs(theta5-test_case[2][4])
     t_6_e = abs(theta6-test_case[2][5])
-    print("Theta4: {} | test: {}".format(theta4, test_case[2][3]))
-    print("Theta5: {} | test: {}".format(theta5, test_case[2][4]))
-    print("Theta6: {} | test: {}".format(theta6, test_case[2][5]))
     print ("\nTheta 1 error is: %04.8f" % t_1_e)
     print ("Theta 2 error is: %04.8f" % t_2_e)
     print ("Theta 3 error is: %04.8f" % t_3_e)
