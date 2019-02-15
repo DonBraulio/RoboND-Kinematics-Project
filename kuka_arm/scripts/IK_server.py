@@ -15,29 +15,35 @@ import tf
 from kuka_arm.srv import *
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from geometry_msgs.msg import Pose
-from mpmath import *
 from sympy import *
+from mpmath import pi
+
 
 ## Helper rotation functions
 def rot_x(angle):
-    return Matrix([[   1,           0,           0, 0],
-                   [   0,  cos(angle), -sin(angle), 0],
-                   [   0,  sin(angle),  cos(angle), 0],
-                   [   0,           0,           0, 1]])
+    return N(Matrix([[   1,           0,           0, 0],
+                     [   0,  cos(angle), -sin(angle), 0],
+                     [   0,  sin(angle),  cos(angle), 0],
+                     [   0,           0,           0, 1]]))
+
 
 def rot_z(angle):
-    return Matrix([[   cos(angle), -sin(angle), 0, 0],
-                   [   sin(angle),  cos(angle), 0, 0],
-                   [            0,           0, 1, 0],
-                   [            0,           0, 0, 1]])
+    return N(Matrix([[   cos(angle), -sin(angle), 0, 0],
+                     [   sin(angle),  cos(angle), 0, 0],
+                     [            0,           0, 1, 0],
+                     [            0,           0, 0, 1]]))
+
 
 def rot_y(angle):
-    return Matrix([[    cos(angle),  0, sin(angle), 0],
-                   [             0,  1,          0, 0],
-                   [   -sin(angle),  0, cos(angle), 0],
-                   [             0,  0,          0, 1]])
+    return N(Matrix([[    cos(angle),  0, sin(angle), 0],
+                     [             0,  1,          0, 0],
+                     [   -sin(angle),  0, cos(angle), 0],
+                     [             0,  0,          0, 1]]))
 
-## Definitions outside the loop ##
+
+# Calculates the norm only for the 3 first coordinates (useful for 4d vecs)
+def norm3d(vec):
+    return Matrix(vec[0:3]).norm()
 
 # Variable DH params (related to joint angles)
 q1, q2, q3, q4, q5, q6, q7 = symbols('q1:8')  # theeta values of dh-params
@@ -91,8 +97,9 @@ T6_7 = Matrix([[cos(q7),         -sin(q7),               0,      a6    ],
                [sin(q7)*sin(p6), cos(q7)*sin(p6),  cos(p6), cos(p6)*d7 ],
                [              0,               0,        0,     1      ]])
 
-# Correction matrix from Gazebo coords to DH coords
-R_gazebo_to_dh = simplify(rot_y(pi/2) * rot_x(pi))
+# Correction matrices from/to Gazebo coords to DH coords
+R_gazebo_to_dh = N(simplify(rot_x(pi) * rot_y(pi/2)))
+R_dh_to_gazebo = N(simplify(rot_z(pi) * rot_y(-pi/2)))
 
 # Extract rotation matrices from the transformation matrices
 R0_1 = T0_1[0:3, 0:3]
@@ -130,31 +137,42 @@ def handle_calculate_IK(req):
                 [req.poses[x].orientation.x, req.poses[x].orientation.y,
                     req.poses[x].orientation.z, req.poses[x].orientation.w])
 
-            ### Your IK code here
-	    # Compensate for rotation discrepancy between DH parameters and Gazebo
-            p_end_effector = R_gazebo_to_dh * Matrix([[px], [py], [pz], [1]])
+	    ### Your IK code here
+	    p_end_effector = N(Matrix([[px], [py], [pz], [1]]))
 
 	    # Calculate joint angles using Geometric IK method
-            rpy_end_efector = rot_z(yaw) * rot_y(pitch) * rot_x(roll) * R_gazebo_to_dh
-            versor_z = rpy_end_effector[0:4, 2]  # wrist-center z direction versor
-            p_wc = p_end_effector - versor_z * d7  # wrist-center position
-            theta1 = atan2(p_wc[1], p_wc[0])
-            # Position of joint-2 (x, y, z and placeholder for 4th coord)
-            p_j2 = Matrix([a1 * cos(theta1), a1 * sin(theta1), d1, 0])
-            vec_j2_to_wc = p_wc - p_j2  # vector from joint-2 to wrist-center
-            d2_wc = vec_j2_to_wc.norm()  # distance from joint 2 to wrist-center
+	    Rrpy_gazebo = N(rot_z(yaw) * rot_y(pitch) * rot_x(roll))
+	    versor_x_gazebo = Rrpy_gazebo[:, 0]
+	    p_wc = N(p_end_effector - versor_x_gazebo * d7)  # wrist-center position
+	    theta1 = atan2(p_wc[1], p_wc[0])
+	    # Position of joint-2 (x, y, z and placeholder for 4th coord)
+	    p_j2 = Matrix([a1 * cos(theta1), a1 * sin(theta1), d1, 0])
+	    vec_j2_to_wc = p_wc - p_j2  # vector from joint-2 to wrist-center
+	    d2_wc = norm3d(vec_j2_to_wc)  # distance from joint 2 to wrist-center
 
-            # Calculate inner angles from triangle between joint 2, joint 3 and wrist-center
-            inner_j2 = acos((d2_3**2 + d2_wc**2 - d3_wc**2)/(2*d2_3*d2_wc))
-            inner_j3 = acos((d2_3**2 + d3_wc**2 - d2_wc**2)/(2*d2_3*d3_wc))
+	    # Calculate inner angles from triangle between joint 2, joint 3 and wrist-center
+	    inner_j2 = acos((d2_3**2 + d2_wc**2 - d3_wc**2)/(2*d2_3*d2_wc))
+	    inner_j3 = acos((d2_3**2 + d3_wc**2 - d2_wc**2)/(2*d2_3*d3_wc))
 
-            # Having triangle inner angles, calculate needed joint angles
-            angle_wc_j2 = asin(vec_j2_to_wc[2]/d2_wc)  # angle between WC and the horiz-plane at j2
-            theta2 = pi/2 - (inner_j2 + angle_wc_j2)  # theta2 = 0 is 90 degrees with horiz-plane
-            angle_offset_wc_j3 = atan2(-a3, d4)
-            theta3 = pi/2 - (inner_j3 + angle_offset_wc_j3)
+	    # Having triangle inner angles, calculate needed joint angles
+	    angle_wc_j2 = asin(vec_j2_to_wc[2]/d2_wc)  # angle between WC and the horiz-plane at j2
+	    theta2 = pi/2 - (inner_j2 + angle_wc_j2)  # theta2 = 0 is 90 degrees with horiz-plane
+	    angle_offset_wc_j3 = atan2(-a3, d4)
+	    theta3 = pi/2 - (inner_j3 + angle_offset_wc_j3)
 
-            theta4, theta5, theta6 = 0, 0, 0
+	    dh_theta1 = theta1
+	    dh_theta2 = theta2 - pi/2
+	    dh_theta3 = theta3
+	    R0_3 = N(R0_1.subs({q1: dh_theta1}))\
+		   * N(R1_2.subs({q2: dh_theta2}))\
+		   * N(R2_3.subs({q3: dh_theta3}))
+
+	    Rrpy_dh = Rrpy_gazebo * R_dh_to_gazebo
+	    R0_3_inv = R0_3.transpose()  # orthonormal matrix: inv() = transpose()
+	    R3_6 = R0_3_inv * Rrpy_dh[0:3, 0:3]
+	    theta5 = N(atan2(sqrt(R3_6[0, 2]**2 + R3_6[2, 2]**2), R3_6[1, 2]))
+	    theta4 = atan2(R3_6[2,2], -R3_6[0,2])
+	    theta6 = atan2(-R3_6[1,1],R3_6[1,0])
 
             # Populate response for the IK request
             # In the next line replace theta1,theta2...,theta6 by your joint angle variables
