@@ -182,20 +182,18 @@ def test_code(test_case):
     theta3 = pi/2 - (inner_j3 + angle_offset_wc_j3)
 
     dh_theta1 = theta1
-    dh_theta2 = - (pi/2 - theta2)
+    dh_theta2 = theta2 - pi/2
     dh_theta3 = theta3
     R0_3 = N(R0_1.subs({q1: dh_theta1}))\
            * N(R1_2.subs({q2: dh_theta2}))\
            * N(R2_3.subs({q3: dh_theta3}))
 
     Rrpy_dh = Rrpy_gazebo * R_dh_to_gazebo
-    R3_6 = R0_3.inv("LU") * Rrpy_dh[0:3, 0:3]
-    dh_theta6 = atan2(R3_6[2, 0], R3_6[2, 2])
-    dh_theta4 = atan2(R3_6[1, 0], R3_6[0, 0])
-    dh_theta5 = atan2(-R3_6[2, 0], sqrt(R3_6[0, 0]**2 + R3_6[1, 0]**2))
-    theta6 = dh_theta6
-    theta5 = dh_theta5
-    theta4 = dh_theta4
+    R0_3_inv = R0_3.transpose()  # orthonormal matrix: inv() = transpose()
+    R3_6 = R0_3_inv * Rrpy_dh[0:3, 0:3]
+    theta5 = N(atan2(sqrt(R3_6[0, 2]**2 + R3_6[2, 2]**2), R3_6[1, 2]))
+    theta4 = atan2(R3_6[2,2], -R3_6[0,2])
+    theta6 = atan2(-R3_6[1,1],R3_6[1,0])
 
     ## 
     ########################################################################################
@@ -210,8 +208,16 @@ def test_code(test_case):
     ########################################################################################
 
     ## For error analysis please set the following variables of your WC location and EE location in the format of [x,y,z]
-    your_wc = [1,1,1] # <--- Load your calculated WC values in this array
-    your_ee = [1,1,1] # <--- Load your calculated end effector value from your forward kinematics
+    fk_ee = N(T0_1.subs({q1: theta1}))\ 
+            * N(T1_2.subs({q2: theta2}))\
+            * N(T2_3.subs({q3: theta3}))\
+            * N(T3_4.subs({q4: theta4}))\
+            * N(T4_5.subs({q5: theta5}))\
+            * N(T5_6.subs({q6: theta6}))\
+            * N(T6_7.subs({q7: 0}))\
+            * [0, 0, 0, 1]
+    your_wc = [p_wc[0],p_wc[1],p_wc[2]] # <--- Load your calculated WC values in this array
+    your_ee = [fk_ee[0, 3],fk_ee[1, 3],fk_ee[2, 3]] # <--- Load your calculated end effector value from your forward kinematics
     ########################################################################################
 
     ## Error analysis
