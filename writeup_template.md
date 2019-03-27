@@ -35,10 +35,10 @@ m | n | pm | qn
 
 To transform from the end effector position to the arm base coordinates, we only need to multiply all the `Tm_n` matrices with the values from the table above:
 
-`
+```python
 # p_EE is the position w.r.t the End Effector frame, and p_base is w.r.t the base link
 p_base = T0_1 * T1_2 * T2_3 * T3_4 * T4_5 * T5_6 * T6_7 * p_EE
-`
+```
 For example, if we set `p_EE = (0, 0, 0, 1)`, then `p_base` is the position of the End Effector itself in the base link frame. Note that  the last coordinate set to a fixed 1, is the part that multiplies by the translation that each link introduces (last matrix column).
 
 #### 3. Inverse Kinematics
