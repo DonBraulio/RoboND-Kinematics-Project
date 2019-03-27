@@ -9,7 +9,7 @@ The image below shows all the relevant measures of the Kuka arm we're using, whi
 
 The red `z` versors show the origin and rotation axe of each joint, as used in the DH transformations. Note that the `d` and `a` measures not being shown in blue, are zero in the table.
 
-#### 2. Transformation matrices about each joint
+#### 2. Transformation matrices
 If we have the position `(x_n, y_n, z_n)` of any point expressed in relation to any given `joint_n` frame, we can express these coordinates in relation to `joint_m` with `m=n-1`, by multiplying `Tm_n . (x_n, y_n, z_n, 1)`, where `T_m_n` is a matrix of the form:
 
 ```python
@@ -33,12 +33,26 @@ m | n | pm | qn
 5 | 6 | -pi/2 | theta6
 6 | 7 | 0 | 0
 
+To transform from the end effector position to the arm base coordinates, we only need to multiply all the `Tm_n` matrices with the values from the table above:
 
-#### 3. Decouple Inverse Kinematics problem into Inverse Position Kinematics and inverse Orientation Kinematics; doing so derive the equations to calculate all individual joint angles.
+`
+# p_EE is the position w.r.t the End Effector frame, and p_base is w.r.t the base link
+p_base = T0_1 * T1_2 * T2_3 * T3_4 * T4_5 * T5_6 * T6_7 * p_EE
+`
+For example, if we set `p_EE = (0, 0, 0, 1)`, then `p_base` is the position of the End Effector itself in the base link frame. Note that  the last coordinate set to a fixed 1, is the part that multiplies by the translation that each link introduces (last matrix column).
 
-And here's where you can draw out and show your math for the derivation of your theta angles. 
+#### 3. Inverse Kinematics
+Given the end effector (`EE`) desired position and orientation, we have to deduce how to calculate all the theta angles needed. 
 
-![alt text][image2]
+The first angle to deduce is `theta1`, because it's the only angle that affects the `x` and `y` coordinates of the `wc` position, and thus can be deduced using just:
+```python
+theta1 = atan2(p_wc[1], p_wc[0])
+```
+where `p_wc` is the position vector of wrist center `wc`. This position is not directly provided, but can be easily calculated knowing the desired position and orientation of the end effector (`p_EE` and `versor_EE`), and the distance `d7`:
+```python
+p_wc = p_EE - versor_EE * d7
+```
+In the code, `p_wc` is calculated in Gazebo coordinates, and thus `versor_EE` is called `versor_x_gazebo`.
 
 ### Project Implementation
 
