@@ -44,6 +44,7 @@ For example, if we set `p_EE = (0, 0, 0, 1)`, then `p_base` is the position of t
 #### 3. Inverse Kinematics
 Given the end effector (`EE`) desired position and orientation, we have to deduce how to calculate all the theta angles needed. 
 
+##### Deduction of `theta1`
 The first angle to deduce is `theta1`, because it's the only angle that affects the `x` and `y` coordinates of the `wc` position, and thus can be deduced using just:
 ```python
 theta1 = atan2(p_wc[1], p_wc[0])
@@ -53,6 +54,16 @@ where `p_wc` is the position vector of wrist center `wc`. This position is not d
 p_wc = p_EE - versor_EE * d7
 ```
 In the code, `p_wc` is calculated in Gazebo coordinates, and thus `versor_EE` is called `versor_x_gazebo`.
+
+##### Deduction of `theta2` and `theta3`
+After having `theta1`, the deduction of these angles is not as straightforward but can be done using some geometry, which is better explained using the following image.
+
+![alt text](./misc_images/angles.png)
+
+First thing to note, is that the angle labeled `angle_offset_wc_j3` is very exaggerated, given the actual measures of the triangle legs involved, which are `d4 = 1.5m` and `a3 = 0.054m (5.4cm)`. Note that this angle is fixed, only determined by these measures in the arm and not affected by the joint angle `theta3`, because `a3` is parallel and `d4` is perpendicular to one of the sides that determines `theta3`, the one that is parallel to `d2_3` when `theta3 = 0` and moves together with that part of the arm, from `joint_3` to `wc`.
+
+After understanding how these angles are defined, we need to find `d2_wc` and `d3_wc`.
+To start, note that the latter doesn't depend on the joint angles and can be determined using pythagoras as `d3_wc = sqrt(d4^2 + a3^2)`. The latter, requires us to calculate first the current position vector `p_j2` of `joint_2`, which is only dependant on the angle `joint_1` as `x = a1.cos(joint_1)` and `y = a1.sin(joint_1)`; the third coordinate of `p_j2` is always `z = d1`.
 
 ### Project Implementation
 
