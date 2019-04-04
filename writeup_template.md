@@ -63,7 +63,46 @@ After having `theta1`, the deduction of these angles is not as straightforward b
 First thing to note, is that the angle labeled `angle_offset_wc_j3` is very exaggerated, given the actual measures of the triangle legs involved, which are `d4 = 1.5m` and `a3 = 0.054m (5.4cm)`. Note that this angle is fixed, only determined by these measures in the arm and not affected by the joint angle `theta3`, because `a3` is parallel and `d4` is perpendicular to one of the sides that determines `theta3`, the one that is parallel to `d2_3` when `theta3 = 0` and moves together with that part of the arm, from `joint_3` to `wc`.
 
 After understanding how these angles are defined, we need to find `d2_wc` and `d3_wc`.
-To start, note that the latter doesn't depend on the joint angles and can be determined using pythagoras as `d3_wc = sqrt(d4^2 + a3^2)`. The latter, requires us to calculate first the current position vector `p_j2` of `joint_2`, which is only dependant on the angle `joint_1` as `x = a1.cos(joint_1)` and `y = a1.sin(joint_1)`; the third coordinate of `p_j2` is always `z = d1`.
+To start, note that the latter doesn't depend on the joint angles and can be determined using pythagoras as `d3_wc = sqrt(d4^2 + a3^2)`. The latter, requires us to calculate first the current position vector `p_j2` of `joint_2`, which is only dependant on the angle `joint_1` as `x = a1.cos(joint_1)` and `y = a1.sin(joint_1)`; the third coordinate of `p_j2` is always `z = d1`. Once we have `p_j2`, the next step is `d2_wc = | p_wc - p_j2 |`.
+
+Now we've a triangle whose three sides are known, then we can calculate its angles using the law of cosines:
+```
+inner_j2 = acos((d2_3^2 + d2_wc^2 - d3_wc^2)/(2*d2_3*d2_wc))
+inner_j3 = acos((d2_3^2 + d3_wc^2 - d2_wc^2)/(2*d2_3*d3_wc))
+```
+
+The relation between these angles and the joint angles can be observed in the figure, and expressed as:
+```python
+theta2 + inner_j2 + angle_wc_j2 = pi/2
+inner_j3 + angle_offset_wc_j3 + pi/2 + theta3 = pi  # Note that theta3 is negative as shown in the figure
+
+# clearing out theta2 and theta3, we get:
+theta2 = pi/2 - inner_j2 - angle_wc_j2
+theta3 = pi/2 - inner_j3 - angle_offset_wc_j3
+```
+
+##### Calculation of `theta4`, `theta5` and `theta6`
+Given the `yaw`, `pitch` and `roll` angles provided by Gazebo for the end effector, we can have the rotation matrix associated as:
+`Rrpy_gazebo = rot_z(yaw) * rot_y(pitch) * rot_x(roll)`
+
+But that matrix is expressed in Gazebo coordinates, which we can transform into the DH reference frame by applying a couple rotations of 90 or 180 degrees, which in our code is called `R_dh_to_gazebo` and can be deduced from the first image of this writeup. Then we get:
+`Rrpy_dh = Rrpy_gazebo * R_dh_to_gazebo`
+
+Finally, we've the relation:
+```python
+R0_3(theta1, theta2, theta3) * R3_6(theta4, theta5, theta6) = Rrpy_dh
+
+# The first matrix is known because we already have theta1...theta3, then:
+R3_6 = inv(R0_3) * Rrpy_dh
+```
+To make computations more efficient, note that rotation matrices are orthonormal, and then `inv(R0_3) = transpose(R0_3)`.
+After we've the whole R3_6, we need to make the whole symbolic multiplication of DH matrices from `R4` to `R6` and determine formulas for the joint angles, knowing each of the elements of the final multiplied matrix. The final result turns out to be:
+```python 
+theta5 = atan2(sqrt(R3_6[0, 2]^2 + R3_6[2, 2]^2), R3_6[1, 2])
+theta4 = atan2(R3_6[2,2], -R3_6[0,2])
+theta6 = atan2(-R3_6[1,1],R3_6[1,0])
+```
+And now we've all joint angles determined, and the inverse kinematics problem is solved.
 
 ### Project Implementation
 
