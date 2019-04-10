@@ -106,13 +106,15 @@ And now we've all joint angles determined, and the inverse kinematics problem is
 
 ### Project Implementation
 
-#### 1. Fill in the `IK_server.py` file with properly commented python code for calculating Inverse Kinematics based on previously performed Kinematic Analysis. Your code must guide the robot to successfully complete 8/10 pick and place cycles. Briefly discuss the code you implemented and your results. 
+The first definitions in the `IK_server.py` code, are just helper functions for rotation along `x`, `y`, and `z` axes, to avoid writing them all the time, and then a `norm3d(vec)` function, that helps to calculate the module of any vector considering only its first three coordinates, which is used to avoid including the 4th dummy coordinate that multiplies the translation component in the transformation matrices.
 
+Then I define symbols only for `q1..q8` variables in the transformation matrices, which represent the joint angles, because those are the only moving parts. The rest of the DH parameters used in section [Transformation matrices](#2-transformation-matrices) (`am`, `dn` and `pm` in the ) are just constant numeric values, kept in simple python variables. Some constant distances and matrices are calculated or defined outside the `handle_calculate_IK()` function, to avoid the overhead in every call to that function. In particular, `R_dh_to_gazebo` and `R_gazebo_to_dh` are matrices used to transform coordinates from Gazebo world to DH parameters coordinates, and thus, are constant and defined only once.
 
-Here I'll talk about the code, what techniques I used, what worked and why, where the implementation might fail and how I might improve it if I were going to pursue this project further.  
+All DH transformations do both rotation and translation using `4x4` matrices, where the first `3x3` rows/columns are rotation matrices, and the last column is the translation. The last row is just dummy zeros. This requires to add a 4th coordinate to our `3D` position vectors, that needs to have a value of `1` to multiply the last column (translation) and add it up.
 
+Considering these details, the rest of the relevant code in `handle_calculate_IK()` can be understood by following the [Kinematic analysis](#kinematic-analysis) section.
 
-And just for fun, another example image:
-![alt text][image3]
+#### Error analysis
+All this analysis and calculations have been tested using the `IK_debug.py` code, including the comparison between the wrist-center and end-effector position with forward kinematics using the inverse kinematics calculated angles, and the position given by Gazebo.
 
-
+The values are loaded into the vectors named `your_ee` and `your_wc`, and those names are used by the project provided code to calculate the errors for each position.
