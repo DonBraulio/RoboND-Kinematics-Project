@@ -5,6 +5,70 @@ s\theta_n.c\alpha_m & -s\alpha_m & \\
  s\theta_n.s\alpha_m & c\theta_n.s\alpha_m & c\alpha_m
 \end{bmatrix}
 
+T_m^n =
+\begin{bmatrix}
+c\theta_n & -s\theta_n & 0 & a_m\\ 
+s\theta_n.c\alpha_m & c\theta_n.c\alpha_m & -s\alpha_m & -s\alpha_m.dn\\ 
+ s\theta_n.s\alpha_m & c\theta_n.s\alpha_m & c\alpha_m & c\alpha_m.dn\\
+0 & 0 & 0 & 1
+\end{bmatrix}
+
+T_0^1 =
+\begin{bmatrix}
+c\theta_1 & -s\theta_1 & 0 & 0 \\ 
+s\theta_1 & c\theta_1 & 0 & 0 \\ 
+ 0 & 0 & 1 & 0\\
+0 & 0 & 0 & 1
+\end{bmatrix}
+
+T_1^2 =
+\begin{bmatrix}
+c(\theta_2 - \pi/2) & -s(\theta_2 - \pi/2) & 0 & 0.35 \\ 
+0 & 0 & 1 & 0.75\\ 
+ -s(\theta_2 - \pi/2) & -c(\theta_2 - \pi/2) & 0 & 0 \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+
+T_2^3 =
+\begin{bmatrix}
+c\theta_3 & -s\theta_3 & 0 & 1.25 \\ 
+s\theta_3 & c\theta_3 & 0 & 0 \\ 
+ 0 & 0 & 1 & 0\\
+0 & 0 & 0 & 1
+\end{bmatrix}
+
+T_3^4 =
+\begin{bmatrix}
+c\theta_4 & -s\theta_4 & 0 & -0.054 \\ 
+0 & 0 & 1 & 1.5\\ 
+ -s\theta_4 & -c\theta_4 & 0 & 0 \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+
+T_4^5 =
+\begin{bmatrix}
+c\theta_5 & -s\theta_5 & 0 & 0 \\ 
+0 & 0 & -1 & 0\\ 
+ s\theta_5 & c\theta_5 & 0 & 0 \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+
+T_5^6 =
+\begin{bmatrix}
+c\theta_6 & -s\theta_6 & 0 & 0 \\ 
+0 & 0 & 1 & 0\\ 
+ -s\theta_6 & -c\theta_6 & 0 & 0 \\
+0 & 0 & 0 & 1
+\end{bmatrix}
+
+T_6^7 =
+\begin{bmatrix}
+1 & 0 & 0 & 0 \\ 
+0 & 1 & 0 & 0 \\ 
+ 0 & 0 & 1 & 0.303\\
+0 & 0 & 0 & 1
+\end{bmatrix}
+
 
 \\ \\ 
 \alpha_3 = -\pi/2, c\alpha_3 = 0, s\alpha_3 = -1\\
