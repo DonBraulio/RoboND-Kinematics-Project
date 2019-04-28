@@ -29,7 +29,7 @@ m | n | pm | qn
 1 | 2 | -pi/2 | theta2 - pi/2
 2 | 3 | 0 | theta3
 3 | 4 | -pi/2 | theta4
-4 | 5 | -pi/2 | theta5
+4 | 5 | pi/2 | theta5
 5 | 6 | -pi/2 | theta6
 6 | 7 | 0 | 0
 
@@ -96,13 +96,37 @@ R0_3(theta1, theta2, theta3) * R3_6(theta4, theta5, theta6) = Rrpy_dh
 R3_6 = inv(R0_3) * Rrpy_dh
 ```
 To make computations more efficient, note that rotation matrices are orthonormal, and then `inv(R0_3) = transpose(R0_3)`.
-After we've the whole R3_6, we need to make the whole symbolic multiplication of DH matrices from `R4` to `R6` and determine formulas for the joint angles, knowing each of the elements of the final multiplied matrix. The final result turns out to be:
-```python 
-theta5 = atan2(sqrt(R3_6[0, 2]^2 + R3_6[2, 2]^2), R3_6[1, 2])
-theta4 = atan2(R3_6[2,2], -R3_6[0,2])
-theta6 = atan2(-R3_6[1,1],R3_6[1,0])
-```
-And now we've all joint angles determined, and the inverse kinematics problem is solved.
+
+So, now we've the numeric values of the `R3_6`, we now need to know the relation between `theta4..6` and these entries. 
+
+First step, let's consider the rotation matrix of a single joint, for the DH system we're using:
+
+![alt text](./misc_images/eqn_1.svg)
+
+Now, substituting with our parameters, we get:
+
+![alt text](./misc_images/eqn_2.svg)
+
+Multiplying these matrices, we get the full `R3_6` expression:
+
+![alt text](./misc_images/eqn_3.svg)
+
+Now we need expressions to clear out the `theta` values from the numeric entries.
+We'll be using the following trigonometric relations:
+
+![alt text](./misc_images/eqn_4.svg)
+
+And now, it's easy to get expressions for `theta` values, when `theta5` is **not zero**.
+
+![alt text](./misc_images/eqn_5.svg)
+
+Now, if `theta5 = 0`, then `sin(theta5) = 0`, and it nulls all the entries we're
+using to clear out the rest of the variables.
+So for that particular case we set `sin(theta5) = 0` in the matrix above and we get the following set of equations:
+
+![alt text](./misc_images/eqn_6.svg)
+
+And now we've all joint angles determined for all cases, and the inverse kinematics problem is solved.
 
 ### Project Implementation
 
@@ -113,6 +137,10 @@ Then I define symbols only for `q1..q8` variables in the transformation matrices
 All DH transformations do both rotation and translation using `4x4` matrices, where the first `3x3` rows/columns are rotation matrices, and the last column is the translation. The last row is just dummy zeros. This requires to add a 4th coordinate to our `3D` position vectors, that needs to have a value of `1` to multiply the last column (translation) and add it up.
 
 Considering these details, the rest of the relevant code in `handle_calculate_IK()` can be understood by following the [Kinematic analysis](#kinematic-analysis) section.
+
+Finally, let me show you the reward of implementing it all right, after running some pick and place operations:
+
+![alt text](./misc_images/Screenshot_2019-04-26_01-02-09.png)
 
 #### Error analysis
 All this analysis and calculations have been tested using the `IK_debug.py` code, including the comparison between the wrist-center and end-effector position with forward kinematics using the inverse kinematics calculated angles, and the position given by Gazebo.
