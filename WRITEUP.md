@@ -33,7 +33,21 @@ m | n | pm | qn
 5 | 6 | -pi/2 | theta6
 6 | 7 | 0 | 0
 
-To transform from the end effector position to the arm base coordinates, we only need to multiply all the `Tm_n` matrices with the values from the table above:
+Now we need to put all these values in the expression of `Tm_n` matrix. We'll here use the standard naming, where the angle referred above as `pm` is expressed with the greek character `alpha`, and the rest of the names are directly mapped:
+
+![alt text](./misc_images/Tm_n.svg)
+
+Substituting the values above, we get the following transformation matrices for all joints:
+
+![alt text](./misc_images/T0_1.svg)
+![alt text](./misc_images/T1_2.svg)
+![alt text](./misc_images/T2_3.svg)
+![alt text](./misc_images/T3_4.svg)
+![alt text](./misc_images/T4_5.svg)
+![alt text](./misc_images/T5_6.svg)
+![alt text](./misc_images/T6_7.svg)
+
+Now, knowing the joint angles, we can translate any coordinates from the End-effector frame, to the base link (fixed) frame:
 
 ```python
 # p_EE is the position w.r.t the End Effector frame, and p_base is w.r.t the base link
