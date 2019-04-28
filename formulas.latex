@@ -1,0 +1,49 @@
+R_n^m =
+\begin{bmatrix}
+c\theta_n & -s\theta_n & 0\\ 
+s\theta_n.c\alpha_m & -s\alpha_m & \\ 
+ s\theta_n.s\alpha_m & c\theta_n.s\alpha_m & c\alpha_m
+\end{bmatrix}
+
+
+\\ \\ 
+\alpha_3 = -\pi/2, c\alpha_3 = 0, s\alpha_3 = -1\\
+\alpha_4 = \pi/2, c\alpha_4 = 0, s\alpha_4 = 1\\
+\alpha_5 = -\pi/2, c\alpha_5 = 0, s\alpha_5 = -1
+\\ \\ 
+R_4^3 =
+\begin{bmatrix}
+c\theta_4 & -s\theta_4 & 0\\ 
+0 & 0 & 1 \\ 
+ -s\theta_4 & -c\theta_4 & 0
+\end{bmatrix}
+\\ \\ 
+R_5^4 =
+\begin{bmatrix}
+c\theta_5 & -s\theta_5 & 0\\ 
+0 & 0 & -1 \\ 
+ s\theta_5 & c\theta_5 & 0
+\end{bmatrix}
+\\ \\ 
+R_6^5 =
+\begin{bmatrix}
+c\theta_6 & -s\theta_6 & 0\\ 
+0 & 0 & 1 \\ 
+ -s\theta_6 & -c\theta_6 & 0
+\end{bmatrix}
+\\ \\ 
+R_6^3 = R_4^3.R_5^4.R_6^5 =
+\begin{bmatrix}
+c\theta_4.c\theta_5.c\theta_6 - s\theta_4.s\theta_6 & -c\theta_4.c\theta_5.s\theta_6 - s\theta_4.c\theta_6 & -c\theta_4.s\theta_5 \\ 
+s\theta_5.c\theta_6 & -s\theta_6.s\theta_5 & c\theta_5 \\ 
+-s\theta_4.c\theta_5.c\theta_6 - c\theta_4.s\theta_6 & s\theta_4.c\theta_5.s\theta_6 - c\theta_4.c\theta_6 & s\theta_4.s\theta_5
+\end{bmatrix}
+
+tan(\theta) = \frac{sin(\theta)}{cos(\theta)} \;,\;\; cos(\theta)^2 + sin(\theta)^2 = 1  \\
+\Rightarrow \theta = atan2(sin(\theta), cos(\theta)) = atan2(\sqrt{1 - cos(\theta)^2}, cos(\theta)) \\ \\
+
+\theta_5 = atan2(\sqrt{1 - r_{23}^2}, r_{23}) \\
+\theta_4 = atan2(r_{33}, -r_{13}) \\
+\theta_6 = atan2(-r_{22}, r_{21}) \\
+
+\theta_5 = 0 \;\; \Rightarrow cos(\theta_4 + \theta_6) = r_{11}\\ \Rightarrow  \;\; \theta_4 + \theta_6 = atan2(\sqrt{1 - r_{11}^2}, r_{11})
