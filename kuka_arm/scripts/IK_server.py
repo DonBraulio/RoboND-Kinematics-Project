@@ -113,6 +113,7 @@ R6_7 = T6_7[0:3, 0:3]
 
 def handle_calculate_IK(req):
     rospy.loginfo("Received %s eef-poses from the plan" % len(req.poses))
+    print "Received eef poses"
     if len(req.poses) < 1:
         print "No valid poses received"
         return -1
@@ -170,9 +171,15 @@ def handle_calculate_IK(req):
 	    Rrpy_dh = Rrpy_gazebo * R_dh_to_gazebo
 	    R0_3_inv = R0_3.transpose()  # orthonormal matrix: inv() = transpose()
 	    R3_6 = R0_3_inv * Rrpy_dh[0:3, 0:3]
-	    theta5 = N(atan2(sqrt(R3_6[0, 2]**2 + R3_6[2, 2]**2), R3_6[1, 2]))
-	    theta4 = atan2(R3_6[2,2], -R3_6[0,2])
-	    theta6 = atan2(-R3_6[1,1],R3_6[1,0])
+	    theta5 = N(atan2(sqrt(1 - R3_6[1, 2]**2), R3_6[1, 2]))
+
+            # Singular case
+            if Abs(theta5) < 1e-1:
+                theta4 = 0.0
+                theta6 = atan2(sqrt(1 - R3_6[0, 0]**2), R3_6[0, 0])
+            else:
+                theta4 = atan2(R3_6[2, 2], -R3_6[0, 2])
+                theta6 = atan2(-R3_6[1, 1], R3_6[1, 0])
 
             # Populate response for the IK request
             # In the next line replace theta1,theta2...,theta6 by your joint angle variables
